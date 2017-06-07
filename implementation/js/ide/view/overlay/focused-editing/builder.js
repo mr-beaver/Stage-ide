@@ -26,7 +26,8 @@
 		actions: {
 			'update-group': function($btn, e) {
 				var cacheName = this.options.cacheName,
-					allGroups = app.store.get(cacheName);
+					allBuilders = app.store.get('__builder'),
+					allGroups = allBuilders[cacheName];
 				if (e.shiftKey) {
 					//Add a Hanger group
 					var hangerNumber = allGroups.hangerGroups.length,
@@ -45,7 +46,8 @@
 
 					//Update the cache
 					allGroups.hangerGroups.push(hangerGroup);
-					app.store.set(cacheName, allGroups);
+					allBuilders[cacheName] = allGroups;
+					app.store.set('__builder', _.deepClone(allBuilders));
 
 					//Spray the new hanger
 					hangerGroup.name = cacheName;
@@ -83,7 +85,8 @@
 		onReady: function() {
 			var self = this,
 				cacheName = this.options.cacheName,
-				allGroups = app.store.get(cacheName),
+				allBuilders = app.store.get('__builder'),
+				allGroups = allBuilders[cacheName],
 				currentDirection = allGroups.direction,
 				stackNumber = 0,
 				hangerNumber = 0;
@@ -141,7 +144,8 @@
 		},
 		extractTemplate: function() {
 			var builderName = this.options.cacheName,
-				groups = app.store.get(builderName),
+				allBuilders = app.store.get('__builder'),
+				groups = allBuilders[builderName],
 				stackGroups = groups.stackGroups,
 				hangerGroups = groups.hangerGroups,
 				hangerNumber = 0,
@@ -156,22 +160,20 @@
 			allTemplate.append('<div region="stack-groups" style="height:100%; display:flex; ' + direction + '"></div>');
 			allTemplate.append('<div region="hanger-groups" style="position:absolute; top:0; left:0; height:100%; width:100%;"></div>');
 			_.each(stackGroups, function(stackGroup) {
-				if (stackGroup.template) {
-					var stackId = builderName + '-' + stackNumber + '-id',
-						styleTagContent = JSON.stringify(stackGroup.css_container)
-											  .replace(/\{/g, '')
-											  .replace(/"/g, '')
-											  .replace(/,/g, ';')
-											  .replace(/\}/g, ';'),
-						stackTemplate;
-					if (stackGroup.data) {
-						stackTemplate = '{{#' + stackGroup.data + '}}' + stackGroup.template + '{{/' + stackGroup.data + '}}';
-					} else {
-						stackTemplate = stackGroup.template;
-					}
-					var stackDiv = '<div id="' + stackId + '" style="' + styleTagContent + '">' + stackTemplate + '</div>';
-					allTemplate.find('[region="stack-groups"]').append(stackDiv);
+				var stackId = builderName + '-' + stackNumber + '-id',
+					styleTagContent = JSON.stringify(stackGroup.css_container)
+										  .replace(/\{/g, '')
+										  .replace(/"/g, '')
+										  .replace(/,/g, ';')
+										  .replace(/\}/g, ';'),
+					stackTemplate;
+				if (stackGroup.data) {
+					stackTemplate = '{{#' + stackGroup.data + '}}' + stackGroup.template + '{{/' + stackGroup.data + '}}';
+				} else {
+					stackTemplate = stackGroup.template;
 				}
+				var stackDiv = '<div id="' + stackId + '" style="' + styleTagContent + '">' + stackTemplate + '</div>';
+				allTemplate.find('[region="stack-groups"]').append(stackDiv);
 				stackNumber += 1;
 			});
 			_.each(hangerGroups, function(hangerGroup) {
@@ -181,11 +183,14 @@
 											  .replace(/\{/g, '')
 											  .replace(/"/g, '')
 											  .replace(/,/g, ';')
-											  .replace(/\}/g, ';');
-						hangerGroupDiv = '<div id ="' + hangerGroupId + '" style="' + styleTagContent + '">' + hangerGroup.template + '</div>';
+											  .replace(/\}/g, ';'),
+						hangerTemplate;
 					if (hangerGroup.data) {
-						hangerGroupDiv = '{{#' + hangerGroup.data + '}}' + hangerGroupDiv + '{{/' + hangerGroup.data + '}}';
+						hangerTemplate = '{{#' + hangerGroup.data + '}}' + hangerGroup.template + '{{/' + hangerGroup.data + '}}';
+					} else {
+						hangerTemplate = hangerGroup.template;
 					}
+					var hangerGroupDiv = '<div id="' + hangerGroupId + '" style="' + styleTagContent + '">' + hangerTemplate + '</div>';
 					allTemplate.find('[region="hanger-groups"]').append(hangerGroupDiv);
 				}
 				hangerNumber += 1;
@@ -194,7 +199,8 @@
 		},
 		extractLess: function() {
 			var builderName = this.options.cacheName,
-				groups = app.store.get(builderName),
+				allBuilders = app.store.get('__builder'),
+				groups = allBuilders[builderName],
 				stacks = groups.stackGroups,
 				hangerGroups = groups.hangerGroups,
 				hangerNumber = 0,
@@ -243,7 +249,8 @@
 			var viewAndRegion = obj.name,
 				stackNumber   = obj.stackNumber,
 				hangerNumber  = obj.hangerNumber,
-				cacheData     = app.store.get(viewAndRegion),
+				allBuilders   = app.store.get('__builder'),
+				cacheData     = allBuilders[viewAndRegion],
 				deleteGroups  = cacheData.stackGroups,
 				deleteStrings = cacheData.hangerGroups;
 			//check what type of delete
@@ -280,7 +287,8 @@
 					name: viewAndRegion
 				};
 				if (cacheData.stackGroups.length > 0) {
-					app.store.set(viewAndRegion, cacheData);
+					allBuilders[viewAndRegion] = cacheData;
+					app.store.set('__builder', _.deepClone(allBuilders));
 					var cssId = viewAndRegion + '-' + stackNumber + '-css';
 					this.$el.find('#' + cssId).remove();
 					app.coop('update-data', options);
@@ -295,7 +303,8 @@
 					direction: cacheData.direction,
 					name: viewAndRegion
 				};
-				app.store.set(viewAndRegion, cacheData);
+				allBuilders[viewAndRegion] = cacheData;
+				app.store.set('__builder', _.deepClone(allBuilders));
 				var stringCssId = viewAndRegion + '-' + hangerNumber + '-hanger-css',
 					stringId = viewAndRegion + '-' + hangerNumber + '-hanger-id';
 
@@ -350,14 +359,16 @@
 		},
 		onDragStop: function(event, ui) {
 			var viewAndRegion = this.get('name'),
-				allGroups = app.store.get(viewAndRegion),
+				allBuilders = app.store.get('__builder'),
+				allGroups = allBuilders[viewAndRegion],
 				newHangerGroup = this.get();
 			newHangerGroup.css_container.top = this.$el.parent().css('top');
 			newHangerGroup.css_container.left = this.$el.parent().css('left');
 			allGroups.hangerGroups[this.get('hangerNumber')].css_container.top = this.$el.parent().css('top');
 			allGroups.hangerGroups[this.get('hangerNumber')].css_container.left = this.$el.parent().css('left');
 			this.set(newHangerGroup);
-			app.store.set(viewAndRegion, allGroups);
+			allBuilders[viewAndRegion] = allGroups;
+			app.store.set('__builder', _.deepClone(allBuilders));
 		},
 		onReady: function() {
 			//Apply content
@@ -367,9 +378,8 @@
 			if (this.get('data')) {
 				template = '{{#' + this.get('data') + '}}' + template + '{{/' + this.get('data') + '}}';
 			}
-			var	appliedContent = applyGroupContent(template, this.options.dataSource.options.dataSource.get(this.get()));
+			var	appliedContent = applyGroupContent(template, this.options.dataSource.options.dataSource.get());
 			this.$el.find('[region="hanger-container"]').html(appliedContent);
-
 			//Apply less
 			compileLess(uniqueId, this, 'hanger-container');
 
@@ -449,7 +459,8 @@
 				newId;
 			arrayId.pop();
 			var viewAndRegion = this.get('name'),
-				allGroups = app.store.get(viewAndRegion),
+				allBuilders = app.store.get('__builder'),
+				allGroups = allBuilders[viewAndRegion],
 				editStackGroup = allGroups.stackGroups,
 				last = editStackGroup.length - 1,
 				stackNumber = arrayId.pop(),
@@ -461,7 +472,8 @@
 						stackGroups.css({
 							'flex-direction': 'column',
 						});
-						app.store.set(viewAndRegion, allGroups);
+						allBuilders[viewAndRegion] = allGroups;
+						app.store.set('__builder', _.deepClone(allBuilders));
 					}
 					this.$el.find('.drag-left').hide();
 					this.$el.find('.drag-right').hide();
@@ -474,7 +486,8 @@
 						stackGroups.css({
 							'flex-direction': 'column',
 						});
-						app.store.set(viewAndRegion, allGroups);
+						allBuilders[viewAndRegion] = allGroups;
+						app.store.set('__builder', _.deepClone(allBuilders));
 					}
 					newId = viewAndRegion + '-' + (parseInt(stackNumber) + 1) + '-id';
 					this.$el.find('.drag-left').hide();
@@ -488,7 +501,8 @@
 						stackGroups.css({
 							'flex-direction': 'row',
 						});
-						app.store.set(viewAndRegion, allGroups);
+						allBuilders[viewAndRegion] = allGroups;
+						app.store.set('__builder', _.deepClone(allBuilders));
 					}
 					this.$el.find('.drag-top').hide();
 					this.$el.find('.drag-bottom').hide();
@@ -501,7 +515,8 @@
 						stackGroups.css({
 							'flex-direction': 'row',
 						});
-						app.store.set(viewAndRegion, allGroups);
+						allBuilders[viewAndRegion] = allGroups;
+						app.store.set('__builder', _.deepClone(allBuilders));
 					}
 					newId = viewAndRegion + '-' + (parseInt(stackNumber) + 1) + '-id';
 					this.$el.find('.drag-top').hide();
@@ -517,7 +532,8 @@
 				newId;
 			arrayId.pop();
 			var viewAndRegion = this.get('name'),
-				allGroups = app.store.get(viewAndRegion),
+				allBuilders = app.store.get('__builder'),
+				allGroups = allBuilders[viewAndRegion],
 				stackGroups = allGroups.stackGroups,
 				last = stackGroups.length - 1;
 			stackNumber = arrayId.pop();
@@ -646,7 +662,8 @@
 				newId;
 			arrayId.pop();
 			var viewAndRegion = this.get('name'),
-				allGroups = app.store.get(viewAndRegion),
+				allBuilders = app.store.get('__builder'),
+				allGroups = allBuilders[viewAndRegion],
 				editStackGroup = allGroups.stackGroups,
 				last = editStackGroup.length - 1;
 			stackNumber = arrayId.pop();
@@ -721,7 +738,8 @@
 
 				//Update the cache
 				allGroups.stackGroups = editStackGroup;
-				app.store.set(viewAndRegion, allGroups);
+				allBuilders[viewAndRegion] = allGroups;
+				app.store.set('__builder', _.deepClone(allBuilders));
 
 				editedData.stackNumber = this.get('stackNumber');
 				editedData.name = this.get('name');
@@ -749,7 +767,8 @@
 
 				//Update the cache
 				allGroups.stackGroups = editStackGroup;
-				app.store.set(viewAndRegion, allGroups);
+				allBuilders[viewAndRegion] = allGroups;
+				app.store.set('__builder', _.deepClone(allBuilders));
 
 				editedData.stackNumber = this.get('stackNumber');
 				editedData.name = this.get('name');
@@ -771,7 +790,8 @@
 
 				//Update the cache
 				allGroups.stackGroups = editStackGroup;
-				app.store.set(viewAndRegion, allGroups);
+				allBuilders[viewAndRegion] = allGroups;
+				app.store.set('__builder', _.deepClone(allBuilders));
 
 				//Update the current Stack group with the updated height
 				editedData.stackNumber = this.get('stackNumber');
@@ -789,7 +809,8 @@
 			} else if (position === 'start') {
 				//Update the cache
 				allGroups.stackGroups = editStackGroup;
-				app.store.set(viewAndRegion, allGroups);
+				allBuilders[viewAndRegion] = allGroups;
+				app.store.set('__builder', _.deepClone(allBuilders));
 
 				//coop for adding to the beginning
 				var options = {
@@ -803,7 +824,8 @@
 		},
 		onReady: function() {
 			var viewAndRegion = this.get('name'),
-				allGroups = app.store.get(viewAndRegion),
+				allBuilders = app.store.get('__builder'),
+				allGroups = allBuilders[viewAndRegion],
 				uniqueId = viewAndRegion + '-' + this.get('stackNumber'),
 				template = this.get('template'),
 				currentBuilder = this.options.dataSource;
