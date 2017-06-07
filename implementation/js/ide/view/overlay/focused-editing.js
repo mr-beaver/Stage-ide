@@ -86,7 +86,7 @@
 			if(!this.spraying){
 				console.log('im here with no spraying...');
 				//go fetch what has been stored in the cache, if not configured
-				var stored = app.store.get(this.get('cacheName'));
+				var stored = app.store.get('__builder')[this.get('cacheName')];
 
 				this.spraying = app.view({
 									template: stored.template || ' ',
@@ -122,11 +122,12 @@
 		builderResult: function(){
 			var builder, template, dataTab, dataContent, less, compliedLess, attribute,
 				builderFlag = true, dataFlag = true, remoteFlag = false,
-				savedConfigs = app.store.get(this.get('cacheName')),
+				allBuilders = app.store.get('__builder'),
+				savedConfigs = allBuilders[this.get('cacheName')],
 				theme = $('head link[rel="stylesheet"]').attr('href').split('/')[1],
 				cssId = 'exported-' + this.get('cacheName');
-    
-    		//fetch builder view
+
+			//fetch builder view
 			try {
 				builder = app.locate('Overlay.FocusedEditing.Builder').view;
 			}catch(e){
@@ -174,7 +175,7 @@
 					});
 				}
 
-			//check whether user has configured data tab.	
+			//check whether user has configured data tab.
 			try{
 				dataTab = this.getViewFromTab('Data');
 			}catch(e){
@@ -206,7 +207,7 @@
 						//fetch data
 						dataContent = savedConfigs.data;
 						//fetch remote flag
-						remoteFlag = savedConfigs.remoteFlag;	
+						remoteFlag = savedConfigs.remoteFlag;
 					}else {//really there is no data for this view
 						dataContent = "{}"; //for consistency as local storage, since we need to parse later
 					}
@@ -221,7 +222,7 @@
 
 
 				//save the extracted template and data to cache for future use
-				savedConfigs = _.extend(savedConfigs, 
+				savedConfigs = _.extend(savedConfigs,
 										{
 											template: template,
 											data: dataContent,
@@ -230,7 +231,8 @@
 											remoteFlag: remoteFlag
 										});
 				//sync with local storage
-				app.store.set(this.get('cacheName'), _.deepClone(savedConfigs));
+				allBuilders[this.get('cacheName')] = _.deepClone(savedConfigs);
+				app.store.set('__builder', _.deepClone(savedConfigs));
 
 				return savedConfigs;
 			}
