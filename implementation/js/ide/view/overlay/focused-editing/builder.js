@@ -105,16 +105,16 @@
 				self.spray(('#' + id), newStackGroup);
 				if (currentDirection === 'v') {
 					if (allGroups.stackGroups.length > 1) {
-						newStackGroup.$el.find('.drag-left').addClass('hide');
-						newStackGroup.$el.find('.drag-right').addClass('hide');
+						newStackGroup.$el.find('.drag-left').addClass('hidden');
+						newStackGroup.$el.find('.drag-right').addClass('hidden');
 						stackGroupsDiv.css({
 							'flex-direction': 'column',
 						});
 					}
 				} else if (currentDirection === 'h') {
 					if (allGroups.stackGroups.length > 1) {
-						newStackGroup.$el.find('.drag-top').addClass('hide');
-						newStackGroup.$el.find('.drag-bottom').addClass('hide');
+						newStackGroup.$el.find('.drag-top').addClass('hidden');
+						newStackGroup.$el.find('.drag-bottom').addClass('hidden');
 						stackGroupsDiv.css({
 							'flex-direction': 'row',
 						});
@@ -321,15 +321,13 @@
 			'<div action-click="update-hanger" region="hanger-container"></div>',
 			'<div class="ui-draggable-item drag-hanger-right"></div>',
 		],
-		initialize: function() {
-			this.flagX = false;
-			this.flagY = false;
-		},
 		dnd: {
 			drag: {
 				helper: 'original'
 			}
 		},
+		flagX: false,
+		flagY: false,
 		actions: {
 			'update-hanger': function($btn, e) {
 				//added by patrick for sliding up edit
@@ -435,15 +433,11 @@
 	var StackGroup = app.view('StackGroup', {
 		template: [
 			'<div region="view-lock" action="update-group"></div>',
-			'<div class="ui-draggable-item drag-top"></div>',
-			'<div class="ui-draggable-item drag-left"></div>',
-			'<div class="ui-draggable-item drag-right"></div>',
-			'<div class="ui-draggable-item drag-bottom"></div>',
+			'<div class="ui-draggable-item drag-top hidden"></div>',
+			'<div class="ui-draggable-item drag-left hidden"></div>',
+			'<div class="ui-draggable-item drag-right hidden"></div>',
+			'<div class="ui-draggable-item drag-bottom hidden"></div>',
 		],
-		initialize: function() {
-			this.heightFlag = true;
-			this.widthFlag = true;
-		},
 		dnd: {
 			drag: {
 				helper: 'original'
@@ -452,6 +446,8 @@
 		actions: {
 			_bubble: true,
 		},
+		heightFlag: true,
+		widthFlag: true,
 		onDragStart: function(event, ui) {
 			var id = this.$el.parent().attr('id'),
 				arrayId = id.split('-'),
@@ -475,8 +471,8 @@
 						allBuilders[viewAndRegion] = allGroups;
 						app.store.set('__builder', _.deepClone(allBuilders));
 					}
-					this.$el.find('.drag-left').hide();
-					this.$el.find('.drag-right').hide();
+					this.$el.find('.drag-top').removeClass('hidden');
+					this.$el.find('.drag-bottom').removeClass('hidden');
 					$('<div id="new"></div>').insertBefore('#' + id);
 				}
 			} else if (event.hasClass('drag-bottom')) {
@@ -490,8 +486,8 @@
 						app.store.set('__builder', _.deepClone(allBuilders));
 					}
 					newId = viewAndRegion + '-' + (parseInt(stackNumber) + 1) + '-id';
-					this.$el.find('.drag-left').hide();
-					this.$el.find('.drag-right').hide();
+					this.$el.find('.drag-top').removeClass('hidden');
+					this.$el.find('.drag-top').removeClass('hidden');
 					$('<div id="' + newId + '"></div>').insertAfter('#' + id);
 				}
 			} else if (event.hasClass('drag-left')) {
@@ -504,8 +500,8 @@
 						allBuilders[viewAndRegion] = allGroups;
 						app.store.set('__builder', _.deepClone(allBuilders));
 					}
-					this.$el.find('.drag-top').hide();
-					this.$el.find('.drag-bottom').hide();
+					this.$el.find('.drag-left').removeClass('hidden');
+					this.$el.find('.drag-right').removeClass('hidden');
 					$('<div id="new"></div>').insertBefore('#' + id);
 				}
 			} else if (event.hasClass('drag-right')) {
@@ -519,8 +515,8 @@
 						app.store.set('__builder', _.deepClone(allBuilders));
 					}
 					newId = viewAndRegion + '-' + (parseInt(stackNumber) + 1) + '-id';
-					this.$el.find('.drag-top').hide();
-					this.$el.find('.drag-bottom').hide();
+					this.$el.find('.drag-left').removeClass('hidden');
+					this.$el.find('.drag-right').removeClass('hidden');
 					$('<div id="' + newId + '"></div>').insertAfter('#' + id);
 				}
 			}
@@ -617,8 +613,8 @@
 					this.initialWidth = this.$el.width();
 					this.initialBasis = parseInt(this.$el.parent().css('flex-basis'));
 				}
-				var newRightWidth = parseInt(this.change / this.initialWidth * this.initialBasis);
 				this.change = arguments[1].originalPosition.left - arguments[1].position.left;
+				var newRightWidth = parseInt(this.change / this.initialWidth * this.initialBasis);
 				var rightWidth = this.initialBasis - newRightWidth;
 				this.$el.parent().css('flex', '0 1 ' + rightWidth + '%');
 				if (parseInt(stackNumber) === last) {
@@ -851,13 +847,17 @@
 			//Remove extra handles
 			if (allGroups.stackGroups.length === 1) {
 				allGroups.direction = '';
+				this.$el.find('.drag-top').removeClass('hidden');
+				this.$el.find('.drag-bottom').removeClass('hidden');
+				this.$el.find('.drag-left').removeClass('hidden');
+				this.$el.find('.drag-right').removeClass('hidden');
 			}
 			if (allGroups.direction === 'v') {
-				this.$el.find('.drag-left').hide();
-				this.$el.find('.drag-right').hide();
+				this.$el.find('.drag-top').removeClass('hidden');
+				this.$el.find('.drag-bottom').removeClass('hidden');
 			} else if (allGroups.direction === 'h') {
-				this.$el.find('.drag-top').hide();
-				this.$el.find('.drag-bottom').hide();
+				this.$el.find('.drag-left').removeClass('hidden');
+				this.$el.find('.drag-right').removeClass('hidden');
 			}
 		}
 	});
