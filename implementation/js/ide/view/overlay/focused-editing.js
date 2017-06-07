@@ -232,7 +232,7 @@
 										});
 				//sync with local storage
 				allBuilders[this.get('cacheName')] = _.deepClone(savedConfigs);
-				app.store.set('__builder', _.deepClone(savedConfigs));
+				app.store.set('__builder', _.deepClone(allBuilders));
 
 				return savedConfigs;
 			}
