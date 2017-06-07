@@ -142,6 +142,18 @@
 				//extract less
 				less = builder.extractLess();
 
+				//save this less to backend, so we don't need to store in the cache in order to preserve the styling
+				if(less){
+					app.remote({
+						url: 'api/saveless',
+						payload: {
+							lessString: less,
+							themeName: theme
+						},
+					});
+				}
+
+				//still need this, since until user reload the page, they won't able to get the new less
 				//check if less exists, and then complie
 				//referenced Zahra's builder
 				if(less){

@@ -386,9 +386,9 @@
 							template: savedConfigs.template,
 							data: savedConfigs.remoteFlag ? savedConfigs.data : JSON.parse(savedConfigs.data)
 						}));
-
-
-						$('head').append('<style id="' + savedConfigs.cssId + '">' + savedConfigs.css + '</style>');
+						
+						//no need to store or import less, it's all in less/specifics right now.
+						//$('head').append('<style id="' + savedConfigs.cssId + '">' + savedConfigs.css + '</style>');
 					}
 
 					//keep a copy for later reference
