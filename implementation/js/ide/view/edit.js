@@ -387,8 +387,8 @@
 							data: savedConfigs.remoteFlag ? savedConfigs.data : JSON.parse(savedConfigs.data)
 						}));
 
-						//no need to store or import less, it's all in less/specifics right now.
-						//$('head').append('<style id="' + savedConfigs.cssId + '">' + savedConfigs.css + '</style>');
+						//still need this one, exported less is only for exported view
+						$('head').append('<style id="' + savedConfigs.cssId + '">' + savedConfigs.css + '</style>');
 					}
 
 					//keep a copy for later reference

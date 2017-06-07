@@ -67,6 +67,8 @@
 						attributes: {
 							style: 'height:' + $trigger.height() + 'px;width:' + $trigger.width() + 'px;margin: 40px auto 0 auto;position:relative;',//make it expand, temporary solution
 						},
+						less: configs.less ? configs.less : ' ',
+						themeName: configs.themeName,
 					},
 				});
 				//close current view
@@ -84,7 +86,6 @@
 		onClose: function(){
 			//fetch cache if there is nothing configured
 			if(!this.spraying){
-				console.log('im here with no spraying...');
 				//go fetch what has been stored in the cache, if not configured
 				var stored = app.store.get('__builder')[this.get('cacheName')];
 
@@ -144,15 +145,19 @@
 				less = builder.extractLess();
 
 				//save this less to backend, so we don't need to store in the cache in order to preserve the styling
-				if(less){
-					app.remote({
-						url: 'api/saveless',
-						payload: {
-							lessString: less,
-							themeName: theme
-						},
-					});
-				}
+				//only exporting less when exporting a view.
+				// if(less){
+				// 	app.remote({
+				// 		url: 'api/saveless',
+				// 		payload: {
+				// 			lessString: less,
+				// 			themeName: theme,
+
+				// 		},
+				// 	}).done(function(data){
+				// 		console.log('less saved to the backend');
+				// 	});
+				// }
 
 				//still need this, since until user reload the page, they won't able to get the new less
 				//check if less exists, and then complie
@@ -228,11 +233,13 @@
 											data: dataContent,
 											cssId: cssId,
 											css: compliedLess,
-											remoteFlag: remoteFlag
+											remoteFlag: remoteFlag,
+											less: less ? less : ' ',
+											themeName: theme,
 										});
 				//sync with local storage
 				allBuilders[this.get('cacheName')] = _.deepClone(savedConfigs);
-				app.store.set('__builder', _.deepClone(savedConfigs));
+				app.store.set('__builder', _.deepClone(allBuilders));
 
 				return savedConfigs;
 			}

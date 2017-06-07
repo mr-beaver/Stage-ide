@@ -76,36 +76,6 @@ module.exports = function(server){
 		});
 	});
 
-	router.post('/saveless', function(req, res){
-		var less = req.body.lessString,
-			theme = req.body.themeName,
-			baseLessSrc = '../../implementation/themes/' + theme + '/less/specifics/',
-			srcLessFile = path.join(baseLessSrc, 'builder.less');
-
-		//name the file contains all the builder style as builder.less
-
-		//so not first check whether builder.less exists
-		if(fs.existsSync(srcLessFile)){//exist
-
-			//append to the file, add a new line before append
-			fs.appendFileSync(srcLessFile, '\n' + beautify_css(less), 'utf-8', function(err){
-				if(err) throw err;
-				console.log('Append less fail.');
-			});
-
-		}else{//not exist
-
-			//create and write
-			fs.writeFileSync(srcLessFile, beautify_css(less), {flag: 'wx'}, function(err){
-				if(err) throw err;
-				console.log('Write less fail.');
-			});			
-		}
-
-		//temp
-		return res.status(200);
-	});
-
 	router.post('/viewexport', function(req, res){
 		var views = getViewList();
 		//get html and name
@@ -117,7 +87,11 @@ module.exports = function(server){
 			editors = req.body.editors,
 			attributes = req.body.attributes,
 			overwrite = req.body.overwrite,
-			remoteFlag = req.body.remoteFlag;
+			remoteFlag = req.body.remoteFlag,
+			less = req.body.less,
+			themeName = req.body.themeName;
+		//make a copy of original name
+		var originalName = name;
 		
 		//make sure to capitalize first letters after "." of name to meet Stage.js view naming scheme
 		name = (_.map(name.split('.'), function(str){ return str.charAt(0).toUpperCase() + str.slice(1); })).join('.');
@@ -126,7 +100,8 @@ module.exports = function(server){
 		if(!_.contains(views, 'User.' + name) || overwrite){
 			//two basic paths
 			var baseJsSrc = '../../implementation/js/ide/view/user/',
-				baseHtmlSrc = '../../implementation/static/template/view/user/';
+				baseHtmlSrc = '../../implementation/static/template/view/user/',
+				baseLessSrc = '../../implementation/themes/' + themeName + '/less/specifics/exported/';
 
 			//relative path and view name
 			var rpath = name.toLowerCase().split('.');
@@ -173,6 +148,18 @@ module.exports = function(server){
 						'}); })(Application);';
 			jsStr = beautify_js(jsStr);
 			fs.writeFileSync(path.join(tempJs, fileName + '.js'), jsStr);
+
+			//export less into ../../implementation/themes/' + themeName + '/less/specifics/exported/
+			//first test whether base path exists or not, if not make one
+			if (!fs.existsSync(baseLessSrc)){
+			    fs.mkdirSync(baseLessSrc);
+			}
+
+			var lessPath = path.join(baseLessSrc, originalName + '.less');
+			//no need to check whether file exists, rewrite it anyway
+			//scope the less with .regional-user-<viewname>
+			//beautify_css works okay with less file
+			fs.writeFileSync(lessPath, beautify_css('.regional-user-' + originalName + '{' + less + '}'));
 
 			return res.status(200).json({'msg': 'Saved'});
 		}else{
