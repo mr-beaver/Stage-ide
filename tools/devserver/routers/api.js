@@ -76,6 +76,36 @@ module.exports = function(server){
 		});
 	});
 
+	router.post('/saveless', function(req, res){
+		var less = req.body.lessString,
+			theme = req.body.themeName,
+			baseLessSrc = '../../implementation/themes/' + theme + '/less/specifics/',
+			srcLessFile = path.join(baseLessSrc, 'builder.less');
+
+		//name the file contains all the builder style as builder.less
+
+		//so not first check whether builder.less exists
+		if(fs.existsSync(srcLessFile)){//exist
+
+			//append to the file, add a new line before append
+			fs.appendFileSync(srcLessFile, '\n' + beautify_css(less), 'utf-8', function(err){
+				if(err) throw err;
+				console.log('Append less fail.');
+			});
+
+		}else{//not exist
+
+			//create and write
+			fs.writeFileSync(srcLessFile, beautify_css(less), {flag: 'wx'}, function(err){
+				if(err) throw err;
+				console.log('Write less fail.');
+			});			
+		}
+
+		//temp
+		return res.status(200);
+	});
+
 	router.post('/viewexport', function(req, res){
 		var views = getViewList();
 		//get html and name
