@@ -535,6 +535,7 @@
 					if (this.heightFlag) {
 						this.heightFlag = false;
 					}
+					currentBuilder.$el.find('#' + newId).css('order', (parseInt(stackNumber) + 1));
 					currentBuilder.$el.find('#' + newId).css('flex', '0 1 ' + newBottomHeight + '%');
 				} else {
 					var currentIdBottom = this.$el.parent().attr('id');
@@ -609,6 +610,7 @@
 					if (this.widthFlag) {
 						this.widthFlag = false;
 					}
+					currentBuilder.$el.find('#' + newId).css('order', (parseInt(stackNumber) + 1));
 					currentBuilder.$el.find('#' + newId).css('flex', '0 1 ' + newRightWidth + '%');
 				} else {
 					var currentRightId = this.$el.parent().attr('id');
@@ -825,6 +827,9 @@
 			compileLess(uniqueId, this, 'view-lock');
 
 			//Remove extra handles
+			if (allGroups.stackGroups.length === 1) {
+				allGroups.direction = '';
+			}
 			if (allGroups.direction === 'v') {
 				this.$el.find('.drag-left').hide();
 				this.$el.find('.drag-right').hide();
