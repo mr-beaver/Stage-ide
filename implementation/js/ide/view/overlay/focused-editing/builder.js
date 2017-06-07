@@ -60,7 +60,7 @@
 				} else {
 					//Edit a stack group
 					var region = this.$el.find(e.currentTarget),
-						stackNumber = region.parent().css('order'),
+						stackNumber = region.parent().parent().css('order'),
 						currentStackGroup = allGroups.stackGroups[stackNumber];
 					currentStackGroup.name = cacheName;
 					currentStackGroup.stackNumber = stackNumber;
@@ -162,11 +162,14 @@
 											  .replace(/\{/g, '')
 											  .replace(/"/g, '')
 											  .replace(/,/g, ';')
-											  .replace(/\}/g, ';');
-						stackDiv = '<div id="' + stackId + '" style="' + styleTagContent + '">' + stackGroup.template + '</div>';
+											  .replace(/\}/g, ';'),
+						stackTemplate;
 					if (stackGroup.data) {
-						stackDiv = '{{#' + stackGroup.data + '}}' + stackDiv + '{{/' + stackGroup.data + '}}';
+						stackTemplate = '{{#' + stackGroup.data + '}}' + stackGroup.template + '{{/' + stackGroup.data + '}}';
+					} else {
+						stackTemplate = stackGroup.template;
 					}
+					var stackDiv = '<div id="' + stackId + '" style="' + styleTagContent + '">' + stackTemplate + '</div>';
 					allTemplate.find('[region="stack-groups"]').append(stackDiv);
 				}
 				stackNumber += 1;
@@ -360,7 +363,11 @@
 			//Apply content
 			var viewAndRegion = this.get('name'),
 				uniqueId = viewAndRegion + '-' + this.get('hangerNumber') + '-hanger',
-				appliedContent = applyGroupContent(this.get('template'), this.options.dataSource.options.dataSource.get(this.get('data')));
+				template = this.get('template');
+			if (this.get('data')) {
+				template = '{{#' + this.get('data') + '}}' + template + '{{/' + this.get('data') + '}}';
+			}
+			var	appliedContent = applyGroupContent(template, this.options.dataSource.options.dataSource.get(this.get()));
 			this.$el.find('[region="hanger-container"]').html(appliedContent);
 
 			//Apply less
@@ -797,13 +804,15 @@
 				allGroups = app.store.get(viewAndRegion),
 				uniqueId = viewAndRegion + '-' + this.get('stackNumber'),
 				template = this.get('template'),
-				data = this.get('data'),
 				currentBuilder = this.options.dataSource;
 
 			//Display the content
-			var appliedContent = applyGroupContent(template, this.options.dataSource.options.dataSource.get(data));
+			if (this.get('data')) {
+				template = '{{#' + this.get('data') + '}}' + template + '{{/' + this.get('data') + '}}';
+			}
+			var appliedContent = applyGroupContent(template, this.options.dataSource.options.dataSource.get());
 			this.$el.find('[region="view-lock"]').html(appliedContent);
-			this.$el.css({
+			this.$el.parent().css({
 				'order': this.get('stackNumber'),
 			});
 
